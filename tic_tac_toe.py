@@ -23,11 +23,11 @@ print_board(current.board)
 
 #main game loop:
 while current.check_board() == 0:
-	player_move_x = input("Enter the x dimension of your move: ")
-	player_move_y = input("Enter the y dimension of your move: ")
+	#prompt user for their move, checking for validity:
+	player_move = get_player_move(current.board[0])
 	
 	#determine which node.child the player chose
-	player_move_index = child_node_from_move_coordinates(current.board, player_move_x, player_move_y)
+	player_move_index = child_node_from_move_coordinates(current.board, player_move)
 	
 	#advance current to that node (now consider the board corresponding to player's move):
 	current = current.children[player_move_index]

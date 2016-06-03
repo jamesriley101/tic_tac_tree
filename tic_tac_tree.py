@@ -121,7 +121,7 @@ class simulator():
 			move_rating = float(i.record[0] * aggressiveness + i.record[1]) / (sum(i.record) + i.record[-1] * defensiveness)
 			#print("%s : %s") % (i.record, this_rating)
 			if move_rating > best_rating:
-				best_rating = this_rating
+				best_rating = move_rating
 				best_move = i
 		return best_move
 
