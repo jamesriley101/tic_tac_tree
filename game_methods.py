@@ -15,6 +15,8 @@ def get_player_move(board):
 		player_move[1] = input("Enter the y dimension of your move: ")
 	return player_move
 
+#identify the node in the list children that corresponds to the coordinates of the player move (the
+#list children was populated by creating a node for every available move, ordered as they appear row-wise)
 def child_node_from_move_coordinates(board, player_move):
 	player_move_index = 0
 	linear_board = reshape(board, [1, len(board[0]) ** 2])[0]
