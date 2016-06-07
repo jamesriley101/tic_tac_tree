@@ -1,4 +1,5 @@
 # tic_tac_tree
+i came here to find out how to run the game - i also wanted a description of the functions, either here or in docstrings
 Program that will not lose to you in tic tac toe, on an arbitrarily sized board. Uses a tree structure relating possible game-states, and traverses that tree to caculate the hypothetical outcome record stemming from each game-state node.
 
 At the beginning of the game, the user is prompted for a runtime. At each turn, the program considers possible game sequences from the current game-state, determines the outcome of each sequence, and logs the winner/tie game in the "record" of every node along the way back to the current node. 
