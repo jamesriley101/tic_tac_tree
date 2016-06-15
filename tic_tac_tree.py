@@ -1,205 +1,193 @@
 from random import choice
 from time import time
-
 from numpy import copy, zeros
 
 # for help commenting, use package DocBlockr
-# I would call this something more descriptive than node...maybe Board? because
-# each node represents a unique board?
-# Node gives me no info about what it is
 
-
-class Node():
+class Board():
     """
     represents a game state.
-    Node.board is a 2d array each element represents a square
-    0 = no move yet, -1 = human move, and 1 = computer move).
-    # you dont have to use this pattern, but each arg in init should be noted
+    Board.allMovesMade is a 2d array where each element represents a space on the Board
+    (0 = no move yet, -1 = human move, and 1 = computer move).
+    
     args:
-        parent: Node - previous game state.
-        children: list([Node]) - all possible next-turn states.
-        # note the units for record what is [0-0-0]
-        record: is the weighted record of game simulations that passed through
-        thatgame state in all previous turns' simulations
-        turn: ???
+        previousBoard: Board - previous game state.
+        allMovesMade: numpy array - all moves the on Board (0 = no move yet, 1 = computer, -1 = human)
+        current player: int - which player is about to move. -1 = human, 1 = computer
+        boardSize: int - size of the board. only designated when instanting the empty board
+        
     """
+    def __init__(self, previousBoard, allMovesMade, currentPlayer, boardSize = None):
+        
+        self.previousBoard = previousBoard
+        self.allMovesMade = allMovesMade
+        self.currentPlayer = currentPlayer
+        self.nextBoards = {}
+        self.simulatedRecordWeighted = {
+                                    "wins_weighted": 0.1,
+                                    "ties_weighted": 0.1,
+                                    "loses_weighted": 0.1,
+        }
+        
+        #if dimension is specified, we are instantiating an empty board:
+        if allMovesMade == None:
+            self.allMovesMade = zeros([boardSize, boardSize])
+            self.boardSize = boardSize
+        else:
+            self.boardSize = len(allMovesMade[0])
 
-    def __init__(self, parent, board, children, turn):
-        # replace the board parameter with dimension,
-        # then do `zeros([board_dimension, board_dimension])` here.
-        # i've refactored.
-        # no need to save self.dimension
-        # later... actually, i think this should just take a board,
-        # then calculate children based on the board.
-        # board should actually be its own class, with has make children
-        self.board = board
-        self.turn = turn
-        # why do we ever need Node.parent?
-        self.parent = parent
-        #  these should be more descriptive
-        # - all nodes have parents and children
-        # - what are they? previous_move, next_moves?
-        # self.children = self.create_child_nodes?
-        # also, children could be a 'map' - a dict of nodes by coordinates,
-        # to more easily find a child node in child_node_from_move_coordinates
-        in game_methods
-        self.children = children
-        # should this be a tuple?
-        self.record = [0, 0, 0]
+    def printBoard(self):
+        print_board = list(self.allMovesMade)
+        for i in range(len(print_board)):
+            print_board[i] = list(print_board[i])
+        for n in print_board:
+            for i,j in enumerate(n):
+                if j == 0:
+                    n[i] = ' '
+                if j == -1:
+                    n[i] = 'X'
+                if j == 1:
+                    n[i] = 'O'
+        for i in print_board:
+            print(i)
 
-    def check_board(self):
-        # better to use docstrings, because in many ides, it will show you
-        # the docstring when you highlight a class - total nitpick
-        """check for a winner or tie-game in self.board"""
-        for i in xrange(self.dimension):
-            # could split this into private methods:
-            # _check_horizontal, _check_vertical, _check_diagonal,
-            if (sum(self.board[:, i]) == -(self.dimension) or
-                    sum(self.board[i, :]) == -(self.dimension)):
-                return -1
-            if (sum(self.board[:, i]) == self.dimension or
-                    sum(self.board[i, :]) == self.dimension):
+    def check_player_move(self, player_move):
+        for i in player_move:
+            if i < 0 or i >= len(self.allMovesMade):
+                return False
+            if self.allMovesMade[player_move[1]][player_move[0]]:
+                return False
+        return True
+
+    def get_player_move(self):
+        player_move_x = None
+        player_move_y = None
+        while not self.check_player_move((player_move_x, player_move_y)):
+            player_move_x = input("Enter the x dimension of your move: ")
+            player_move_y = input("Enter the y dimension of your move: ")
+        return self.nextBoards[(player_move_x, player_move_y)]
+
+    def checkForGameOver(self):
+        """
+        check for a winner or tie-game in self.allMovesMade. return 1 for computer win, 
+        -1 for player win, 0 for an ongoing game and -10 for a tie.
+        """
+        player_win = self.boardSize * -1
+        computer_win = self.boardSize
+        for coordinate in xrange(self.boardSize):
+            # check for computer win along horizontals and verticals:
+            if (sum(self.allMovesMade[:, coordinate]) == computer_win or
+                    sum(self.allMovesMade[coordinate, :]) == computer_win):
                 return 1
-
+            # check for player win along horizontals and verticals:
+            if (sum(self.allMovesMade[:, coordinate]) == player_win or
+                    sum(self.allMovesMade[coordinate, :]) == player_win):
+                return -1
+        # check for winner along diagonals
         diag1_sum = 0
         diag2_sum = 0
-        for i in xrange(self.dimension):
-            diag1_sum += self.board[i][i]
-            diag2_sum += self.board[(self.dimension) - 1 - i][i]
-
-        if diag1_sum == -(self.dimension) or diag2_sum == -(self.dimension):
-            return -1
-
-        if diag1_sum == self.dimension or diag2_sum == self.dimension:
+        for coordinate in xrange(self.boardSize):
+            diag1_sum += self.allMovesMade[coordinate][coordinate]
+            diag2_sum += self.allMovesMade[(self.boardSize) - 1 - coordinate][coordinate]
+        # check for player in along diagonals:
+        if diag1_sum == computer_win or diag2_sum == computer_win:
             return 1
-
-        for i in range(self.dimension):
-            for j in range(self.dimension):
-                if self.board[i][j] == 0:
+        # check for computer win along diagonals:
+        if diag1_sum == player_win or diag2_sum == player_win:
+            return -1
+        # check if for any empty spaces:
+        for row in range(self.boardSize):
+            for column in range(self.boardSize):
+                if self.allMovesMade[row][column] == 0:
                     return 0
-        # -10?
+        # if here, return -10 indicating an ongoing game:
         return -10
 
+    def createNextBoards(self):
+        """
+        Create the nextBoards representing all possible moves from the current Board. 
+        Called when a Board is visited in a simulation for the first time. 
+        """
+        for row in range(self.boardSize):
+            for column in range(self.boardSize):
+                if self.allMovesMade[column, row] == 0:
+                    nextBoardMoves = copy(self.allMovesMade)
+                    nextBoardMoves[column, row] = self.currentPlayer
+                    self.nextBoards[(row, column)] = Board(self, nextBoardMoves, self.currentPlayer * -1)
+        return
+
+    def logGame(self, result, weight):
+        """
+        Logs the result of a game simulation at a Board that was a step in that simulation
+        the impact of a result on the simulatedRecordWeighted is inversely weighted by number
+        of turns from the actual current board simulated before reaching that result.
+        """
+        if result == -1:
+            self.simulatedRecordWeighted['loses_weighted'] += 1 / float(weight)
+        if result == 1:
+            self.simulatedRecordWeighted['wins_weighted'] += 1 / float(weight)
+        if result == -10:
+            self.simulatedRecordWeighted['ties_weighted'] += 1 / float(weight)
+        return
+
+    def pickBestMove(self):
+        """
+        Chooses the best available move, based on the simulated records of the Board associated with 
+        each available move.
+        """
+        aggressiveness = 3
+        defensiveness = 5
+        best_option = None
+        best_option_rating = 0
+        for option in self.nextBoards.values():
+            option_rating_numerator = option.simulatedRecordWeighted['wins_weighted'] * aggressiveness + option.simulatedRecordWeighted['ties_weighted']
+            option_rating_denominator = option.simulatedRecordWeighted['loses_weighted'] * defensiveness
+            option_rating = option_rating_numerator / option_rating_denominator
+            if option_rating > best_option_rating:
+                best_option = option
+                best_option_rating = option_rating
+        return best_option
 
 class Simulator():
     """
-    in the allotted runtime, the simulator traverses the
-    tree structure of possible game states, from the current state to
-    all possible end-game states, determines the outcome, then traverses back
-    to the current game state while logging that result in the record
-    of each node along the way. the simulated record of each node,
-    retained and updated throughout the game, is used to evaluate the best
-    possible move
+    the simulator traverses the tree structure of possible Boards, from the actual Board to a random outcome, 
+    determines the outcome, then traverses back to the actual Board while logging that result in simulatedRecordWeighted 
+    of each Board along the way.
+
+    args:
+        homeBoard: Board - The actual game state. Simulator traverses out from this Board and returns. 
     """
 
-    def __init__(self, current_node):
-        self.current_node = current_node
-
-    # docstring
-    # method to create the board for a child node. copies the current board,
-    # and adds the move, passed as x_dim and y_dim, to that board:
-    # also, you could pass the same board around and modify it,
-    # instead of copy(board), just modify the board in place,
-    # there are arguments and proponents of both,
-    # but it *might* help your runtime to not have to create new boards
-    def make_move(self, x_dim, y_dim, board, player):
-        out_board = copy(board)
-        if player == 1:
-            out_board[x_dim][y_dim] = 1
-        else:
-            out_board[x_dim][y_dim] = -1
-        return out_board
-
-    # method to log the result of a game simulation at each node that was in the game sequence.
-    # the impact of a result on the record is inversely weighted by sequence
-    # length.
-    def log_game(self, result, game_moves):
-        # to make this more readable, i might make record a
-        # dict with wins, ties, loses, or a namedtuple
-        if result == -1:
-            self.current_node.record[2] += 1 / float(game_moves)
-        if result == 1:
-            self.current_node.record[0] += 1 / float(game_moves)
-        if result == -10:
-            self.current_node.record[1] += 1 / float(game_moves)
-        return
-
-    # create the child nodes representing all possible moves
-    # from the current game state.
-    # called when a node is visited in a simulation for the first time.
-    def create_child_nodes(self, turn):
-        for i in range(self.current_node.dim):
-            for j in range(self.current_node.dim):
-                if self.current_node.board[i, j] == 0:
-                    child_board = self.make_move(
-                        i, j, self.current_node.board, turn)
-                    self.current_node.children.append(
-                        node(self.current_node, child_board, [], turn * -1))
-        return
-
-    # method to simulate a game sequence from a given game state. moves for both players are chosen
-    # arbitrarily and the simulator advances to that node. the outcome of the sequence is determined,
-    # then the simulator backtracks to the actual game state node, updating the records of the nodes
-    # comprising that sequence along the way. the parent of the current node
-    # is used as a backstop:
-    # isn't current _parent always self.parent?
-    def simulate_one_game(self, current_parent):
-        turn = self.current_node.turn
-        # do you use game_sequence, aside from adding to it?
-        game_sequence = []
+    def __init__(self, homeBoard):
+        self.homeBoard = homeBoard
+        self.currentBoard = None
+    
+    def simulateOneGame(self):
+        """
+        Simulates a game from a given Board. In a given simulation, a member of nextBoards is chosen randomly
+        and the simulator advances to that Board. The eventual outcome of the simulation is determined, and
+        the simulator backtracks to homeBoard (the actual game state), updating the simulatedRecordWeighted 
+        of each Board comprising that simluation along the way back to homeBoard.
+        """
         game_moves = 1
-        while self.current_node.check_board() == 0:
+        self.currentBoard = self.homeBoard
+        while self.currentBoard.checkForGameOver() == 0:
+            if self.currentBoard.nextBoards == {}:
+                self.currentBoard.createNextBoards()
+            self.currentBoard = choice(list(self.currentBoard.nextBoards.values()))
             game_moves += 1
-            # children should be created based on the passed in board
-            if self.current_node.children == []:
-                self.create_child_nodes(turn)
-            game_sequence.append(self.current_node)
-            # might try to make this gaurauntee that it goes
-            # down paths it has least explored
-            # use the native random package
-            self.current_node = choice(self.current_node.children)
-            turn = turn * -1
-        sim_outcome = self.current_node.check_board()
+        sim_outcome = self.currentBoard.checkForGameOver()
 
-        # i don't really get why we have to compare parents?
-        # later... ah - got it - cause we need to tell them if we won
-        # how about Node.update_parent, which calls itself recursively, until parent is None
-        # i think the Nodes should be operating on themselves
-        while self.current_node.parent != current_parent:
-            self.log_game(sim_outcome, game_moves)
-            self.current_node = self.current_node.parent
+        while self.currentBoard != self.homeBoard:
+            self.currentBoard.logGame(sim_outcome, game_moves)
+            self.currentBoard = self.currentBoard.previousBoard
         return
 
-    # method to determine best available move at a given game state. games are simulated for the allotted runtime,
-    # and the best available move is determined by calculating a rating from the accumlated win/loss records of
-    # all simulated games that passed through each of the child nodes
-    # representing the available moves
-
-    def find_best_move(self, this_node, sim_time):
-        # for the allowed time, simulate games, updating the record of each
-        # node:
-        stop_time = time() + sim_time
+    def simulateGamesForTimeN(self, simTime):
+        """
+        For simTime seconds, simulates games, updating the simulatedRecordWeighted of each Board.
+        """
+        stop_time = time() + simTime
         while time() < stop_time:
-            # why is this parent? why is this_node not self?
-            self.simulate_one_game(this_node.parent)
-            # decide best move based on record of each child node (available moves), and strategy parameters multiplying
-            # the impact of simulated wins/losses on the record of each node:
-            aggressiveness = 3
-            defensiveness = 5
-            best_move = None
-            best_rating = 0
-        for child in this_node.children:
-            # don't use \ - if a line is that long,
-            # you should probably split the logic up.
-            # it would be easier to understand what the numerator and operator represent
-            # if you have to, you can enclose it in parentheses
-            # and break at operators, like so - still ugly though
-            move_rating = (float(child.record[0] *
-                           aggressiveness + child.record[1]) /
-                           (sum(child.record) + i.record[-1] * defensiveness))
-
-        if move_rating > best_rating:
-            best_rating = move_rating
-            best_move = child
-
-        return best_move
+            self.simulateOneGame()
+        return

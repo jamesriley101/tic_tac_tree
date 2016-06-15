@@ -8,8 +8,8 @@
 # 		= your libraries
 # 		reformatted to how it should look
 
-from tic_tac_tree import *
-from game_methods import *
+from tic_tac_tree import Board, Simulator
+from game_methods import get_board_dimension, get_simulation_runtime
 
 print("Let's play, biatch.")
 
@@ -19,56 +19,56 @@ print("Let's play, biatch.")
 board_dimension = get_board_dimension()
 simulation_runtime = get_simulation_runtime(board_dimension)
 
-# create head node (empty board) by constructing a node with: parent node = None,
-# board = array of zeros, child nodes = [], and turn = -1 (the human player):
-current =  Node(None, board_dimension, [], -1)
+# create head Board (empty board) by constructing a Board with: parent Board = None,
+# board = array of zeros, nextBoards = [], and turn = -1 (the human player):
+currentBoard =  Board(None, None, -1, board_dimension)
 
-# construct the simulator for the current (head) node:
-# this is why not to use asterix imports - wtf is simulator?
-simulator = Simulator(current)
+# construct the simulator for the current (empty) Board. The simulator simulates game outcomes
+# by traversing from current Board to end-game Boards and back, logging outcome of simulation:
+simulator = Simulator(currentBoard)
 
-# simulate one game by passing the parent of the current node, which is None, to the
-# simulator, so the tree is initialized and the list of current child nodes is populated
-simulator.simulate_one_game(None)
+# simulate one game by passing the parent of the current Board, which is None, to the
+# simulator, so the tree is initialized and the list of current nextBoards is populated
+simulator.simulateOneGame()
 
-print_board(current.board)
+currentBoard.printBoard()
 
 # main game loop:
-while current.check_board() == 0:
-	# prompt user for their move, checking for validity:
-	player_move = get_player_move(current.board[0])
-
-	# determine which node.child the player chose
-	player_move_index = child_node_from_move_coordinates(current.board, player_move)
-
-	# advance current to that node (now consider the board corresponding to player's move):
-	current = current.children[player_move_index]
-	print_board(current.board)
+while currentBoard.checkForGameOver() == 0:
+	# prompt user for their move, checking for validity. advance currentBoard to Board 
+	# corresponding to player's move):
+	currentBoard = currentBoard.get_player_move()
+	currentBoard.printBoard()
 
 	# check if the player won (this condition should never be met...):
-	if current.check_board() == -1:
+	if currentBoard.checkForGameOver() == -1:
 		print("How can this be...?!? You've won!!")
 		break
 	# check if the game was tied:
-	if current.check_board() == -10:
+	if currentBoard.checkForGameOver() == -10:
 		print("Tie game. You are a formidable adversary.")
 		break
 
+	# advance the simulator to the current Board
+	simulator.homeBoard = currentBoard
+
 	print("Now my turn: ")
 
-	# advance the simulator to the current node
-	simulator.current_node = current
+	# in the allowed runtime, simulate games from the current Board:
+	simulator.simulateGamesForTimeN(simulation_runtime)
 
-	# in the allowed runtime, simulate games from this board. at the end of each game simulated, backtrack
-	# through all visited nodes and log result (weighted by game length) in that node's record.
-	# choose the best move based on total records (include simulations from previous turns) of child nodes
-	current = simulator.find_best_move(current, simulation_runtime)
-	print_board(current.board)
+	# chose the best move and advance to that Board:
+	currentBoard = currentBoard.pickBestMove()
 
-	# check for program win:
-	if current.check_board() == 1:
+	currentBoard.printBoard()
+
+	# check for computer win:
+	if currentBoard.checkForGameOver() == 1:
 		print("It's seems I've won again.")
 		break
-
+	# check for tie:
+	if currentBoard.checkForGameOver() == -10:
+		print("Tie game. You are a formidable adversary.")
+		break
 
 
