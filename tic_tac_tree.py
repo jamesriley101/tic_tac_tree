@@ -23,7 +23,7 @@ class Board():
         self.allMovesMade = allMovesMade
         self.currentPlayer = currentPlayer
         self.nextBoards = {}
-        self.simulatedRecordWeighted = {
+        self.simRecordWeighted = {
                                     "wins_weighted": 0.1,
                                     "ties_weighted": 0.1,
                                     "loses_weighted": 0.1,
@@ -119,15 +119,15 @@ class Board():
     def logGame(self, result, weight):
         """
         Logs the result of a game simulation at a Board that was a step in that simulation
-        the impact of a result on the simulatedRecordWeighted is inversely weighted by number
+        the impact of a result on the simRecordWeighted is inversely weighted by number
         of turns from the actual current board simulated before reaching that result.
         """
         if result == -1:
-            self.simulatedRecordWeighted['loses_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['loses_weighted'] += 1 / float(weight)
         if result == 1:
-            self.simulatedRecordWeighted['wins_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['wins_weighted'] += 1 / float(weight)
         if result == -10:
-            self.simulatedRecordWeighted['ties_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['ties_weighted'] += 1 / float(weight)
         return
 
     def pickBestMove(self):
@@ -140,8 +140,8 @@ class Board():
         best_option = None
         best_option_rating = 0
         for option in self.nextBoards.values():
-            option_rating_numerator = option.simulatedRecordWeighted['wins_weighted'] * aggressiveness + option.simulatedRecordWeighted['ties_weighted']
-            option_rating_denominator = option.simulatedRecordWeighted['loses_weighted'] * defensiveness
+            option_rating_numerator = option.simRecordWeighted['wins_weighted'] * aggressiveness + option.simRecordWeighted['ties_weighted']
+            option_rating_denominator = option.simRecordWeighted['loses_weighted'] * defensiveness
             option_rating = option_rating_numerator / option_rating_denominator
             if option_rating > best_option_rating:
                 best_option = option
@@ -151,7 +151,7 @@ class Board():
 class Simulator():
     """
     the simulator traverses the tree structure of possible Boards, from the actual Board to a random outcome, 
-    determines the outcome, then traverses back to the actual Board while logging that result in simulatedRecordWeighted 
+    determines the outcome, then traverses back to the actual Board while logging that result in simRecordWeighted 
     of each Board along the way.
 
     args:
@@ -166,7 +166,7 @@ class Simulator():
         """
         Simulates a game from a given Board. In a given simulation, a member of nextBoards is chosen randomly
         and the simulator advances to that Board. The eventual outcome of the simulation is determined, and
-        the simulator backtracks to homeBoard (the actual game state), updating the simulatedRecordWeighted 
+        the simulator backtracks to homeBoard (the actual game state), updating the simRecordWeighted 
         of each Board comprising that simluation along the way back to homeBoard.
         """
         game_moves = 1
@@ -185,7 +185,7 @@ class Simulator():
 
     def simulateGamesForTimeN(self, simTime):
         """
-        For simTime seconds, simulates games, updating the simulatedRecordWeighted of each Board.
+        For simTime seconds, simulates games, updating the simRecordWeighted of each Board.
         """
         stop_time = time() + simTime
         while time() < stop_time:
