@@ -17,7 +17,7 @@ class Board():
         boardSize: int - size of the board. only designated when instanting the empty board
         
     """
-    def __init__(self, previousBoard, allMovesMade, currentPlayer, boardSize = None):
+    def __init__(self, previousBoard = None, allMovesMade = None, currentPlayer = -1):
         
         self.previousBoard = previousBoard
         self.allMovesMade = allMovesMade
@@ -28,11 +28,12 @@ class Board():
                                     "ties_weighted": 0.1,
                                     "loses_weighted": 0.1,
         }
-        
-        #if dimension is specified, we are instantiating an empty board:
+        #if allMovesMade == None we are instantiating an empty board:
         if allMovesMade == None:
-            self.allMovesMade = zeros([boardSize, boardSize])
-            self.boardSize = boardSize
+            self.boardSize = 0
+            while self.boardSize < 2 or self.boardSize > 6:
+                self.boardSize = input("What size board (2 - 6)? ")
+            self.allMovesMade = zeros([self.boardSize, self.boardSize])
         else:
             self.boardSize = len(allMovesMade[0])
 
@@ -161,6 +162,11 @@ class Simulator():
     def __init__(self, homeBoard):
         self.homeBoard = homeBoard
         self.currentBoard = None
+        self.simTime = 0
+        while self.simTime < self.homeBoard.boardSize - 2:
+            self.simTime = float(input("How long do you want me to think about each move (seconds)? "))
+            if self.simTime < self.homeBoard.boardSize - 2:
+                print("I need a little more time than that for a board of size %s") % board_dimension
     
     def simulateOneGame(self):
         """
@@ -183,11 +189,11 @@ class Simulator():
             self.currentBoard = self.currentBoard.previousBoard
         return
 
-    def simulateGamesForTimeN(self, simTime):
+    def simulateGamesForSimTime(self):
         """
         For simTime seconds, simulates games, updating the simRecordWeighted of each Board.
         """
-        stop_time = time() + simTime
+        stop_time = time() + self.simTime
         while time() < stop_time:
             self.simulateOneGame()
         return
