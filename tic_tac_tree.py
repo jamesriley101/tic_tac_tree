@@ -2,23 +2,21 @@ from random import choice
 from time import time
 from numpy import copy, zeros
 
-# for help commenting, use package DocBlockr
-
 class Board():
     """
     represents a game state.
     Board.allMovesMade is a 2d array where each element represents a space on the Board
     (0 = no move yet, -1 = human move, and 1 = computer move).
-    
+
     args:
         previousBoard: Board - previous game state.
         allMovesMade: numpy array - all moves the on Board (0 = no move yet, 1 = computer, -1 = human)
         current player: int - which player is about to move. -1 = human, 1 = computer
         boardSize: int - size of the board. only designated when instanting the empty board
-        
+
     """
     def __init__(self, previousBoard = None, allMovesMade = None, currentPlayer = -1):
-        
+
         self.previousBoard = previousBoard
         self.allMovesMade = allMovesMade
         self.currentPlayer = currentPlayer
@@ -70,7 +68,7 @@ class Board():
 
     def checkForGameOver(self):
         """
-        check for a winner or tie-game in self.allMovesMade. return 1 for computer win, 
+        check for a winner or tie-game in self.allMovesMade. return 1 for computer win,
         -1 for player win, 0 for an ongoing game and -10 for a tie.
         """
         player_win = self.boardSize * -1
@@ -106,8 +104,8 @@ class Board():
 
     def createNextBoards(self):
         """
-        Create the nextBoards representing all possible moves from the current Board. 
-        Called when a Board is visited in a simulation for the first time. 
+        Create the nextBoards representing all possible moves from the current Board.
+        Called when a Board is visited in a simulation for the first time.
         """
         for row in range(self.boardSize):
             for column in range(self.boardSize):
@@ -133,7 +131,7 @@ class Board():
 
     def pickBestMove(self):
         """
-        Chooses the best available move, based on the simulated records of the Board associated with 
+        Chooses the best available move, based on the simulated records of the Board associated with
         each available move.
         """
         aggressiveness = 3
@@ -151,12 +149,12 @@ class Board():
 
 class Simulator():
     """
-    the simulator traverses the tree structure of possible Boards, from the actual Board to a random outcome, 
-    determines the outcome, then traverses back to the actual Board while logging that result in simRecordWeighted 
+    the simulator traverses the tree structure of possible Boards, from the actual Board to a random outcome,
+    determines the outcome, then traverses back to the actual Board while logging that result in simRecordWeighted
     of each Board along the way.
 
     args:
-        homeBoard: Board - The actual game state. Simulator traverses out from this Board and returns. 
+        homeBoard: Board - The actual game state. Simulator traverses out from this Board and returns.
     """
 
     def __init__(self, homeBoard):
@@ -167,12 +165,12 @@ class Simulator():
             self.simTime = float(input("How long do you want me to think about each move (seconds)? "))
             if self.simTime < self.homeBoard.boardSize - 2:
                 print("I need a little more time than that for a board of size %s") % board_dimension
-    
+
     def simulateOneGame(self):
         """
         Simulates a game from a given Board. In a given simulation, a member of nextBoards is chosen randomly
         and the simulator advances to that Board. The eventual outcome of the simulation is determined, and
-        the simulator backtracks to homeBoard (the actual game state), updating the simRecordWeighted 
+        the simulator backtracks to homeBoard (the actual game state), updating the simRecordWeighted
         of each Board comprising that simluation along the way back to homeBoard.
         """
         game_moves = 1

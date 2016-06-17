@@ -17,7 +17,7 @@ currentBoard.printBoard()
 
 # main game loop:
 while currentBoard.checkForGameOver() == 0:
-	# prompt user for their move, checking for validity. advance currentBoard to Board 
+	# prompt user for their move, checking for validity. advance currentBoard to Board
 	# corresponding to player's move):
 	currentBoard = currentBoard.get_player_move()
 	currentBoard.printBoard()
