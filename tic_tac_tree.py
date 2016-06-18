@@ -22,9 +22,9 @@ class Board():
         self.currentPlayer = currentPlayer
         self.nextBoards = {}
         self.simRecordWeighted = {
-                                    "wins_weighted": 0,
-                                    "ties_weighted": 0,
-                                    "loses_weighted": 0,
+                                    "wins_weighted": 0.1,
+                                    "ties_weighted": 0.1,
+                                    "loses_weighted": 0.1,
         }
         #if allMovesMade == None we are instantiating an empty board:
         if allMovesMade == None:
