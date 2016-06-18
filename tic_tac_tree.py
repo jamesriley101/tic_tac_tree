@@ -22,9 +22,9 @@ class Board():
         self.currentPlayer = currentPlayer
         self.nextBoards = {}
         self.simRecordWeighted = {
-                                    "wins_weighted": 0.1,
-                                    "ties_weighted": 0.1,
-                                    "loses_weighted": 0.1,
+                                    "wins_weighted": 0,
+                                    "ties_weighted": 0,
+                                    "loses_weighted": 0,
         }
         #if allMovesMade == None we are instantiating an empty board:
         if allMovesMade == None:
@@ -122,11 +122,11 @@ class Board():
         of turns from the actual current board simulated before reaching that result.
         """
         if result == -1:
-            self.simRecordWeighted['loses_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['loses_weighted'] += 1 / float(weight) ** 2
         if result == 1:
-            self.simRecordWeighted['wins_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['wins_weighted'] += 1 / float(weight) ** 2
         if result == -10:
-            self.simRecordWeighted['ties_weighted'] += 1 / float(weight)
+            self.simRecordWeighted['ties_weighted'] += 1 / float(weight) ** 2
         return
 
     def pickBestMove(self):
